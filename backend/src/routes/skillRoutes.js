@@ -6,6 +6,7 @@ const router = express.Router();
 
 router.use(protect);
 
+router.get('/suggestions', skillController.getSkillSuggestions);
 router.get('/mine', skillController.getMySkills);
 router.get('/user/:userId', skillController.getUserSkills);
 router.post('/', skillController.addSkill);

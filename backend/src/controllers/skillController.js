@@ -85,6 +85,38 @@ const skillController = {
     
     sendSuccess(res, null, 'Skill removed successfully');
   },
+
+  getSkillSuggestions: async (req, res) => {
+    const { query } = req.query;
+    
+    if (!query || query.length < 2) {
+      return res.json({ success: true, data: { suggestions: [] } });
+    }
+    
+    // Search for matching skill names in the database
+    const skills = await Skill.find({
+      name: { $regex: query, $options: 'i' },
+      isActive: true,
+    })
+    .select('name')
+    .limit(10);
+    
+    // Get unique names from database results
+    const dbSkillNames = [...new Set(skills.map(s => s.name))];
+    
+    // Popular default skills
+    const popularSkills = [
+      'Python', 'JavaScript', 'Guitar', 'Piano', 'Spanish',
+      'French', 'Drawing', 'Cooking', 'Photography', 'Yoga',
+      'Excel', 'Photoshop', 'Public Speaking', 'Chess','Singing', 'Dancing'
+    ].filter(s => s.toLowerCase().startsWith(query.toLowerCase()));
+    
+    // Combine and remove duplicates, max 6
+    const combined = [...new Set([...dbSkillNames, ...popularSkills])].slice(0, 6);
+    
+    res.json({ success: true, data: { suggestions: combined } });
+  },
+
 };
 
 module.exports = skillController;

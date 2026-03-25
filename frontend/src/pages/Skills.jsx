@@ -10,6 +10,8 @@ const SkillForm = ({ onAdd, onClose }) => {
     type: 'offer', description: ''
   });
   const [loading, setLoading] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const handleSubmit = async () => {
     if (!form.name.trim()) return;
@@ -29,13 +31,58 @@ const SkillForm = ({ onAdd, onClose }) => {
         <div className="space-y-4">
           <div>
             <label className="text-sm text-gray-600 dark:text-gray-400">Skill Name *</label>
-            <input
-              type="text"
-              value={form.name}
-              onChange={e => setForm({...form, name: e.target.value})}
-              placeholder="e.g., Python, Guitar, Spanish..."
-              className="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:border-sky-500"
-            />
+                          <div className="relative">
+                <input
+                  type="text"
+                  value={form.name}
+                  onChange={e => {
+                    const value = e.target.value;
+                    setForm({...form, name: value});
+                    
+                    // Use jQuery AJAX to fetch suggestions
+                    if (value.length >= 2) {
+                      const token = localStorage.getItem('accessToken');
+                      $.ajax({
+                        url: `http://localhost:5000/api/skills/suggestions?query=${value}`,
+                        method: 'GET',
+                        headers: { Authorization: `Bearer ${token}` },
+                        success: function(response) {
+                          setSuggestions(response.data.suggestions);
+                          setShowSuggestions(true);
+                        },
+                        error: function() {
+                          setSuggestions([]);
+                        }
+                      });
+                    } else {
+                      setSuggestions([]);
+                      setShowSuggestions(false);
+                    }
+                  }}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                  placeholder="e.g., Python, Guitar, Spanish..."
+                  className="w-full mt-1 px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:border-sky-500"
+                />
+                
+                {/* Suggestions Dropdown */}
+                {showSuggestions && suggestions.length > 0 && (
+                  <div className="absolute z-10 w-full bg-white dark:bg-slate-700 border border-gray-200 dark:border-slate-600 rounded-lg shadow-lg mt-1 overflow-hidden">
+                    {suggestions.map((suggestion, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => {
+                          setForm({...form, name: suggestion});
+                          setShowSuggestions(false);
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-sky-50 dark:hover:bg-slate-600 transition-colors flex items-center gap-2"
+                      >
+                        <span>🔍</span> {suggestion}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
